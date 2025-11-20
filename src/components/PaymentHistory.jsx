@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { getApiBaseUrl } from '../utils/api';
 
 const HistoryContainer = styled.div`
   min-height: 100vh;
@@ -221,7 +222,6 @@ const PaymentHistory = () => {
   const navigate = useNavigate();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -229,34 +229,28 @@ const PaymentHistory = () => {
   const [messagesLoading, setMessagesLoading] = useState(false);
 
   useEffect(() => {
-    // Get user from localStorage
-    const userData = localStorage.getItem('userData');
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      setUser(parsedUser);
-      
-      // Fetch payment history
-      fetchPaymentHistory(parsedUser.id);
-    } else {
-      // Redirect to login if no user data
-      navigate('/login');
-    }
-  }, [navigate]);
+    loadPaymentHistory();
+  }, []);
 
-  const fetchPaymentHistory = async (userId) => {
+  const loadPaymentHistory = async () => {
     try {
-      const response = await fetch(`http://localhost:4000/api/payment/history/${userId}`);
-      const data = await response.json();
+      const userData = JSON.parse(localStorage.getItem('userData'));
+      if (!userData) {
+        navigate('/login');
+        return;
+      }
+
+      const userId = userData.id;
+      const response = await fetch(`${getApiBaseUrl()}/api/payment/history/${userId}`);
       
-      if (data.success) {
-        // Show both pending and confirmed payments
-        const visiblePayments = data.payments.filter(payment => 
-          payment.status === 'pending' || payment.status === 'confirmed'
-        );
-        setPayments(visiblePayments);
+      if (response.ok) {
+        const data = await response.json();
+        setPayments(data.payments || []);
+      } else {
+        console.error('Failed to load payment history');
       }
     } catch (error) {
-      console.error('Error fetching payment history:', error);
+      console.error('Error loading payment history:', error);
     } finally {
       setLoading(false);
     }
@@ -265,21 +259,16 @@ const PaymentHistory = () => {
   const fetchMessages = async (paymentId) => {
     setMessagesLoading(true);
     try {
-      const response = await fetch(`http://localhost:4000/api/messages/payment/${paymentId}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/messages/payment/${paymentId}`, {
         headers: {
           'user-type': 'user'
         }
       });
+      
       const data = await response.json();
       
       if (data.success) {
-        if (data.chatClosed) {
-          setMessages([]);
-          // Show a message that the chat is closed
-          alert('This chat has been closed by the admin. Please contact support if you need further assistance.');
-        } else {
-          setMessages(data.messages);
-        }
+        setMessages(data.messages);
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -291,16 +280,19 @@ const PaymentHistory = () => {
   const sendMessage = async (e) => {
     e.preventDefault();
     
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !selectedPayment) return;
     
     try {
-      const response = await fetch('http://localhost:4000/api/messages', {
+      const userData = JSON.parse(localStorage.getItem('userData'));
+      if (!userData) return;
+      
+      const response = await fetch(`${getApiBaseUrl()}/api/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          userId: user.id,
+          userId: userData.id,
           paymentId: selectedPayment.id,
           message: newMessage,
           userType: 'user'

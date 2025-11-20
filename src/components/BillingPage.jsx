@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { getApiBaseUrl } from '../utils/api';
 
 const BillingContainer = styled.div`
   min-height: 100vh;
@@ -131,7 +132,7 @@ const BillingPage = () => {
     }
     
     try {
-      const loginResponse = await fetch('http://localhost:4000/api/login', {
+      const loginResponse = await fetch(`${getApiBaseUrl()}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getApiBaseUrl } from '../utils/api';
 
 const Payout = () => {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ const Payout = () => {
       const transactionId = 'TXN-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
       
       // Record the payment
-      const response = await fetch('http://localhost:4000/api/payment/record', {
+      const response = await fetch(`${getApiBaseUrl()}/api/payment/record`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

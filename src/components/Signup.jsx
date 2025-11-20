@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate, Link } from 'react-router-dom';
+import { getApiBaseUrl } from '../utils/api';
 
 const AuthContainer = styled.div`
   display: flex;
@@ -133,7 +134,7 @@ const Signup = ({ onLogin }) => {
     
     try {
       // Call the real API
-      const response = await fetch('http://localhost:4000/api/register', {
+      const response = await fetch(`${getApiBaseUrl()}/api/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
