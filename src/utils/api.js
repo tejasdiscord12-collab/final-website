@@ -5,8 +5,8 @@ export const getApiBaseUrl = () => {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return 'http://localhost:4000';
     } else {
-      // For production deployments on Vercel, the API routes are served from the same domain
-      return '';
+      // For production deployments, use the Render backend URL
+      return 'https://client-website-backend-1.onrender.com';
     }
   }
   return 'http://localhost:4000'; // Default for server-side
