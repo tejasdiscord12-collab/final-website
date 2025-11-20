@@ -389,6 +389,10 @@ const AdminDashboard = () => {
   const [newMessage, setNewMessage] = useState('');
   const [qrCode, setQrCode] = useState(null);
   const [loadingQR, setLoadingQR] = useState(false);
+  const [supportMessages, setSupportMessages] = useState([]);
+  const [selectedUserForSupport, setSelectedUserForSupport] = useState(null);
+  const [supportReply, setSupportReply] = useState('');
+  const [supportLoading, setSupportLoading] = useState(false);
   
   const navigate = useNavigate();
 
@@ -402,6 +406,7 @@ const AdminDashboard = () => {
     
     loadData();
     loadAdminSettings();
+    loadSupportMessages();
   }, [navigate]);
 
   // Load real data from backend
@@ -834,6 +839,56 @@ const AdminDashboard = () => {
     }
   };
 
+  // Load support messages
+  const loadSupportMessages = async () => {
+    try {
+      setSupportLoading(true);
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/support/messages`, {
+        headers: {
+          'Authorization': 'admin-secret-token'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setSupportMessages(data.messages);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading support messages:', error);
+    } finally {
+      setSupportLoading(false);
+    }
+  };
+
+  // Send support reply
+  const sendSupportReply = async (userId, message) => {
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/support/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'admin-secret-token'
+        },
+        body: JSON.stringify({ userId, message })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setSupportMessages(prev => [...prev, data.message]);
+          setSupportReply('');
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Error sending support reply:', error);
+      return false;
+    }
+  };
+
   return (
     <DashboardContainer>
       <Header>
@@ -1138,39 +1193,150 @@ const AdminDashboard = () => {
 
             {activeTab === 'messages' && (
               <>
-                <SectionTitle>Messages</SectionTitle>
-                {loading ? (
-                  <LoadingMessage>Loading messages...</LoadingMessage>
-                ) : (
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableHeader>Payment ID</TableHeader>
-                        <TableHeader>User ID</TableHeader>
-                        <TableHeader>Message</TableHeader>
-                        <TableHeader>Date</TableHeader>
-                        <TableHeader>Status</TableHeader>
-                      </TableRow>
-                    </TableHead>
-                    <tbody>
-                      {messages
-                        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                        .map(message => (
-                          <TableRow key={message.id}>
-                            <TableCell>{message.paymentId || 'N/A'}</TableCell>
-                            <TableCell>{message.userId}</TableCell>
-                            <TableCell>{message.message}</TableCell>
-                            <TableCell>{new Date(message.timestamp).toLocaleString()}</TableCell>
-                            <TableCell>
-                              <PaymentStatusBadge className={message.read ? 'confirmed' : 'pending'}>
-                                {message.read ? 'Read' : 'Unread'}
-                              </PaymentStatusBadge>
-                            </TableCell>
+                <SectionTitle>Support Chat</SectionTitle>
+                <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem' }}>
+                  {/* Users List */}
+                  <div style={{ flex: 1, background: '#1e293b', borderRadius: '0.5rem', padding: '1rem', maxHeight: '500px', overflowY: 'auto' }}>
+                    <h3>Users with Support Requests</h3>
+                    {usersLoading ? (
+                      <p>Loading users...</p>
+                    ) : (
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableHeader>User</TableHeader>
+                            <TableHeader>Email</TableHeader>
+                            <TableHeader>Last Message</TableHeader>
+                            <TableHeader>Actions</TableHeader>
                           </TableRow>
-                        ))}
-                    </tbody>
-                  </Table>
-                )}
+                        </TableHead>
+                        <tbody>
+                          {users
+                            .filter(user => supportMessages.some(msg => msg.userId == user.id))
+                            .map(user => {
+                              const lastMessage = supportMessages
+                                .filter(msg => msg.userId == user.id)
+                                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+                              
+                              return (
+                                <TableRow key={user.id}>
+                                  <TableCell>{user.name}</TableCell>
+                                  <TableCell>{user.email}</TableCell>
+                                  <TableCell>
+                                    {lastMessage ? (
+                                      <div>
+                                        <div>{lastMessage.message.substring(0, 30)}...</div>
+                                        <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                                          {new Date(lastMessage.timestamp).toLocaleString()}
+                                        </div>
+                                      </div>
+                                    ) : 'No messages'}
+                                  </TableCell>
+                                  <TableCell>
+                                    <ActionButton 
+                                      className="edit" 
+                                      onClick={() => setSelectedUserForSupport(user)}
+                                    >
+                                      Chat
+                                    </ActionButton>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                        </tbody>
+                      </Table>
+                    )}
+                  </div>
+                  
+                  {/* Chat Window */}
+                  <div style={{ flex: 2, background: '#1e293b', borderRadius: '0.5rem', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+                    {selectedUserForSupport ? (
+                      <>
+                        <div style={{ borderBottom: '1px solid #334155', paddingBottom: '1rem', marginBottom: '1rem' }}>
+                          <h3>Chat with {selectedUserForSupport.name}</h3>
+                          <p style={{ color: '#94a3b8' }}>{selectedUserForSupport.email}</p>
+                        </div>
+                        
+                        <div style={{ flex: 1, overflowY: 'auto', maxHeight: '300px', marginBottom: '1rem' }}>
+                          {supportMessages
+                            .filter(msg => msg.userId == selectedUserForSupport.id)
+                            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                            .map(msg => (
+                              <div 
+                                key={msg.id} 
+                                style={{ 
+                                  marginBottom: '1rem', 
+                                  textAlign: msg.userType === 'admin' ? 'right' : 'left' 
+                                }}
+                              >
+                                <div 
+                                  style={{ 
+                                    display: 'inline-block', 
+                                    background: msg.userType === 'admin' ? '#10b981' : '#334155', 
+                                    color: msg.userType === 'admin' ? '#000' : '#fff', 
+                                    padding: '0.5rem 1rem', 
+                                    borderRadius: '0.5rem',
+                                    maxWidth: '80%'
+                                  }}
+                                >
+                                  <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                                    {msg.userType === 'admin' ? 'You (Admin)' : selectedUserForSupport.name}
+                                  </div>
+                                  <div>{msg.message}</div>
+                                  <div style={{ fontSize: '0.7rem', marginTop: '0.25rem' }}>
+                                    {new Date(msg.timestamp).toLocaleString()}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                        
+                        <div style={{ borderTop: '1px solid #334155', paddingTop: '1rem' }}>
+                          <form 
+                            onSubmit={async (e) => {
+                              e.preventDefault();
+                              if (supportReply.trim()) {
+                                const success = await sendSupportReply(selectedUserForSupport.id, supportReply);
+                                if (success) {
+                                  // Refresh messages
+                                  loadSupportMessages();
+                                }
+                              }
+                            }}
+                          >
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                              <input
+                                type="text"
+                                value={supportReply}
+                                onChange={(e) => setSupportReply(e.target.value)}
+                                placeholder="Type your reply..."
+                                style={{ 
+                                  flex: 1, 
+                                  padding: '0.5rem', 
+                                  background: '#0f172a', 
+                                  border: '1px solid #334155', 
+                                  borderRadius: '0.375rem', 
+                                  color: 'white' 
+                                }}
+                              />
+                              <ActionButton 
+                                type="submit" 
+                                className="edit"
+                                disabled={!supportReply.trim()}
+                              >
+                                Send
+                              </ActionButton>
+                            </div>
+                          </form>
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
+                        Select a user to start chatting
+                      </div>
+                    )}
+                  </div>
+                </div>
               </>
             )}
 

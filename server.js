@@ -51,6 +51,9 @@ let paymentRecords = [];
 // In-memory storage for messages
 let messages = [];
 
+// In-memory storage for support messages
+let supportMessages = [];
+
 // In-memory storage for admin settings (in a real app, you'd use a database)
 let adminSettings = {
   qrCode: null
@@ -455,6 +458,100 @@ app.put('/api/admin/settings', validateAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error('Update admin settings error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Add endpoint for getting support messages for a user
+app.get('/api/support/messages', async (req, res) => {
+  try {
+    const userId = req.headers['user-id'];
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+    
+    const userMessages = supportMessages.filter(msg => 
+      msg.userId == userId || msg.userType === 'admin'
+    );
+    
+    res.json({
+      success: true,
+      messages: userMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+    });
+  } catch (err) {
+    console.error('Get support messages error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Add endpoint for sending support messages
+app.post('/api/support/messages', async (req, res) => {
+  try {
+    const { userId, message, userType } = req.body;
+    
+    if (!userId || !message) {
+      return res.status(400).json({ error: 'User ID and message are required' });
+    }
+    
+    const newMessage = {
+      id: generateId(),
+      userId,
+      message,
+      userType: userType || 'user',
+      timestamp: getCurrentTimestamp()
+    };
+    
+    supportMessages.push(newMessage);
+    
+    res.json({
+      success: true,
+      message: newMessage
+    });
+  } catch (err) {
+    console.error('Send support message error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Add endpoint for getting all support messages (admin only)
+app.get('/api/admin/support/messages', validateAdmin, async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      messages: supportMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+    });
+  } catch (err) {
+    console.error('Get all support messages error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Add endpoint for replying to support messages (admin only)
+app.post('/api/admin/support/messages', validateAdmin, async (req, res) => {
+  try {
+    const { userId, message } = req.body;
+    
+    if (!userId || !message) {
+      return res.status(400).json({ error: 'User ID and message are required' });
+    }
+    
+    const newMessage = {
+      id: generateId(),
+      userId,
+      message,
+      userType: 'admin',
+      timestamp: getCurrentTimestamp()
+    };
+    
+    supportMessages.push(newMessage);
+    
+    res.json({
+      success: true,
+      message: newMessage
+    });
+  } catch (err) {
+    console.error('Send admin support message error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
