@@ -2,6 +2,13 @@ import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -34,30 +41,69 @@ app.use((req, res, next) => {
 // For normal JSON endpoints
 app.use(express.json());
 
-// In-memory storage for users (for testing purposes)
-let users = [
+// File paths for data persistence
+const DATA_DIR = path.join(__dirname, 'data');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
+const PAYMENTS_FILE = path.join(DATA_DIR, 'payments.json');
+const MESSAGES_FILE = path.join(DATA_DIR, 'messages.json');
+const SUPPORT_MESSAGES_FILE = path.join(DATA_DIR, 'supportMessages.json');
+const ADMIN_SETTINGS_FILE = path.join(DATA_DIR, 'adminSettings.json');
+
+// Ensure data directory exists
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR);
+}
+
+// Load data from files or initialize with default values
+let users = loadFromFile(USERS_FILE, [
   {
     id: 1,
     name: 'Test User',
     email: 'test@example.com',
     password_hash: '$2b$10$rOzJqQZ8QxN8QxN8QxN8QeO7.8F5qF5qF5qF5qF5qF5qF5qF5qF5q', // 'password' hashed
-    created_at: new Date()
+    created_at: new Date().toISOString()
   }
-];
+]);
 
-// In-memory storage for payment records
-let paymentRecords = [];
-
-// In-memory storage for messages
-let messages = [];
-
-// In-memory storage for support messages
-let supportMessages = [];
-
-// In-memory storage for admin settings (in a real app, you'd use a database)
-let adminSettings = {
+let paymentRecords = loadFromFile(PAYMENTS_FILE, []);
+let messages = loadFromFile(MESSAGES_FILE, []);
+let supportMessages = loadFromFile(SUPPORT_MESSAGES_FILE, []);
+let adminSettings = loadFromFile(ADMIN_SETTINGS_FILE, {
   qrCode: null
-};
+});
+
+// Helper function to load data from file or return default value
+function loadFromFile(filePath, defaultValue) {
+  try {
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error(`Error loading data from ${filePath}:`, error);
+  }
+  return defaultValue;
+}
+
+// Helper function to save data to file
+function saveToFile(filePath, data) {
+  try {
+    console.log(`Saving data to ${filePath}`);
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    console.log(`Successfully saved data to ${filePath}`);
+  } catch (error) {
+    console.error(`Error saving data to ${filePath}:`, error);
+  }
+}
+
+// Helper function to save all data
+function saveAllData() {
+  saveToFile(USERS_FILE, users);
+  saveToFile(PAYMENTS_FILE, paymentRecords);
+  saveToFile(MESSAGES_FILE, messages);
+  saveToFile(SUPPORT_MESSAGES_FILE, supportMessages);
+  saveToFile(ADMIN_SETTINGS_FILE, adminSettings);
+}
 
 // Helper function to generate unique IDs
 const generateId = () => Math.floor(Math.random() * 1000000) + 1;
@@ -98,10 +144,13 @@ app.post('/api/register', async (req, res) => {
       name,
       email,
       password_hash: hashedPassword,
-      created_at: new Date()
+      created_at: new Date().toISOString()
     };
     
     users.push(newUser);
+    
+    // Save to file
+    saveToFile(USERS_FILE, users);
     
     res.status(201).json({
       success: true,
@@ -253,6 +302,9 @@ app.post('/api/payment/record', (req, res) => {
   // Store payment record
   paymentRecords.push(paymentRecord);
   
+  // Save to file
+  saveToFile(PAYMENTS_FILE, paymentRecords);
+  
   res.json({ success: true, paymentRecord });
 });
 
@@ -276,6 +328,9 @@ app.put('/api/payment/status/:paymentId', (req, res) => {
   // Update status
   paymentRecords[paymentIndex].status = status;
   
+  // Save to file
+  saveToFile(PAYMENTS_FILE, paymentRecords);
+  
   res.json({ success: true, paymentRecord: paymentRecords[paymentIndex] });
 });
 
@@ -295,6 +350,9 @@ app.put('/api/messages/chat/:paymentId/close', (req, res) => {
   paymentMessages.forEach(msg => {
     msg.chatClosed = true;
   });
+  
+  // Save to file
+  saveToFile(MESSAGES_FILE, messages);
   
   res.json({ success: true, message: 'Chat closed successfully' });
 });
@@ -317,6 +375,9 @@ app.put('/api/payment/:paymentId/hide', (req, res) => {
   
   // Mark payment as hidden from user
   paymentRecords[paymentIndex].hiddenFromUser = true;
+  
+  // Save to file
+  saveToFile(PAYMENTS_FILE, paymentRecords);
   
   res.json({ success: true, message: 'Payment hidden from user successfully' });
 });
@@ -369,6 +430,9 @@ app.post('/api/messages', (req, res) => {
   
   // Store message
   messages.push(newMessage);
+  
+  // Save to file
+  saveToFile(MESSAGES_FILE, messages);
   
   res.json({ success: true, message: newMessage });
 });
@@ -426,6 +490,9 @@ app.put('/api/messages/:messageId/read', (req, res) => {
   // Update read status
   messages[messageIndex].read = true;
   
+  // Save to file
+  saveToFile(MESSAGES_FILE, messages);
+  
   res.json({ success: true, message: messages[messageIndex] });
 });
 
@@ -447,9 +514,16 @@ app.put('/api/admin/settings', validateAdmin, async (req, res) => {
   try {
     const { qrCode } = req.body;
     
+    console.log('Received QR code update request:', { qrCode });
+    
     if (qrCode) {
       adminSettings.qrCode = qrCode;
+      console.log('Updated adminSettings:', adminSettings);
     }
+    
+    // Save to file
+    console.log('Saving admin settings to file...');
+    saveToFile(ADMIN_SETTINGS_FILE, adminSettings);
     
     res.json({
       success: true,
@@ -504,6 +578,9 @@ app.post('/api/support/messages', async (req, res) => {
     
     supportMessages.push(newMessage);
     
+    // Save to file
+    saveToFile(SUPPORT_MESSAGES_FILE, supportMessages);
+    
     res.json({
       success: true,
       message: newMessage
@@ -546,6 +623,9 @@ app.post('/api/admin/support/messages', validateAdmin, async (req, res) => {
     
     supportMessages.push(newMessage);
     
+    // Save to file
+    saveToFile(SUPPORT_MESSAGES_FILE, supportMessages);
+    
     res.json({
       success: true,
       message: newMessage
@@ -574,3 +654,6 @@ if (import.meta.url === new URL(import.meta.url).href) {
     });
   });
 }
+
+// Save all data periodically (every 5 minutes)
+setInterval(saveAllData, 5 * 60 * 1000);
