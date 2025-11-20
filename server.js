@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 4000;
 // Configure CORS to allow requests from your frontend
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-frontend-domain.vercel.app', 'https://your-domain.com'] 
+    ? '*' 
     : '*',
   credentials: true
 }));
