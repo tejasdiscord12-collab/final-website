@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "server": "node server.js",
     "dev:server": "nodemon server.js",
-    "vercel-build": "vite build"
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

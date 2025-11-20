@@ -411,8 +411,17 @@ app.put('/api/messages/:messageId/read', (req, res) => {
 export default app;
 
 // Only start the server if this file is run directly (not imported)
+// This check is important for Vercel
 if (import.meta.url === new URL(import.meta.url).href) {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
+  });
+  
+  // Handle graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+      console.log('Process terminated');
+    });
   });
 }
