@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "server": "node server.js",
     "dev:server": "nodemon server.js",
-    "vercel-build": "npm run build"
+    "vercel-build": "npm run build",
+    "postinstall": "node-pre-gyp rebuild -C node_modules/bcrypt"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

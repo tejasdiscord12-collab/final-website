@@ -2,7 +2,7 @@ services:
   - type: web
     name: client-website-backend
     env: node
-    buildCommand: npm install
+    buildCommand: npm install && npm rebuild bcrypt
     startCommand: npm run server
     envVars:
       - key: NODE_ENV
