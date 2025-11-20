@@ -12,7 +12,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://final-website-1-fsmv.onrender.com/api/$1"
+      "dest": "/api/$1"
     },
     {
       "src": "/(.*)",
