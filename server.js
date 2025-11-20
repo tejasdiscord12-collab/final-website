@@ -51,6 +51,11 @@ let paymentRecords = [];
 // In-memory storage for messages
 let messages = [];
 
+// In-memory storage for admin settings (in a real app, you'd use a database)
+let adminSettings = {
+  qrCode: null
+};
+
 // Helper function to generate unique IDs
 const generateId = () => Math.floor(Math.random() * 1000000) + 1;
 
@@ -419,6 +424,39 @@ app.put('/api/messages/:messageId/read', (req, res) => {
   messages[messageIndex].read = true;
   
   res.json({ success: true, message: messages[messageIndex] });
+});
+
+// Add endpoint for getting admin settings
+app.get('/api/admin/settings', validateAdmin, async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      settings: adminSettings
+    });
+  } catch (err) {
+    console.error('Get admin settings error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Add endpoint for updating admin settings
+app.put('/api/admin/settings', validateAdmin, async (req, res) => {
+  try {
+    const { qrCode } = req.body;
+    
+    if (qrCode) {
+      adminSettings.qrCode = qrCode;
+    }
+    
+    res.json({
+      success: true,
+      message: 'Settings updated successfully',
+      settings: adminSettings
+    });
+  } catch (err) {
+    console.error('Update admin settings error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // Export the app for Vercel

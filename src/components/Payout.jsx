@@ -3,31 +3,58 @@ import { useNavigate } from 'react-router-dom';
 import { getApiBaseUrl } from '../utils/api';
 
 const Payout = () => {
-  const navigate = useNavigate();
-  const [processing, setProcessing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(5 * 60); // 5 minutes in seconds
+  const [processing, setProcessing] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState(false);
+  const [qrCode, setQrCode] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  const navigate = useNavigate();
 
-  // Timer effect
-  useEffect(() => {
-    if (timeLeft <= 0) {
-      setPaymentFailed(true);
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setTimeLeft(prevTime => prevTime - 1);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [timeLeft]);
-
-  // Format time for display
+  // Format time as MM:SS
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Load QR code from backend
+  const loadQRCode = async () => {
+    try {
+      // For now, we'll try to get it from the admin settings endpoint
+      // In a real app, you might have a dedicated endpoint for this
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/settings`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.settings && data.settings.qrCode) {
+          setQrCode(data.settings.qrCode);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading QR code:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadQRCode();
+    
+    // Timer countdown
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setPaymentFailed(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const handlePaymentConfirmation = async () => {
     setProcessing(true);
@@ -115,11 +142,13 @@ const Payout = () => {
             {/* QR Code Display Area - Now uses admin-set QR code */}
             <div style={{ width: '300px', height: '300px', background: '#1e293b', border: '2px dashed #334155', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '2rem auto', color: '#94a3b8', fontSize: '1.2rem' }}>
               {(() => {
-                const adminQRCode = localStorage.getItem('adminQRCode');
-                if (adminQRCode) {
+                if (loading) {
+                  return 'Loading QR Code...';
+                }
+                if (qrCode) {
                   return (
                     <img 
-                      src={adminQRCode} 
+                      src={qrCode} 
                       alt="Payment QR Code" 
                       style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
                     />

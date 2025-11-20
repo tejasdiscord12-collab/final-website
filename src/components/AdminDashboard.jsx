@@ -366,12 +366,13 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeServers: 0,
-    systemStatus: 'All Systems Operational'
+    pendingPayments: 0,
+    systemStatus: 'Operational'
   });
   const [users, setUsers] = useState([]);
-  const [servers, setServers] = useState([]);
   const [payments, setPayments] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [servers, setServers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -381,12 +382,14 @@ const AdminDashboard = () => {
     plan: 'Free',
     status: 'active'
   });
-  // New state for messaging
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [selectedPaymentForMessaging, setSelectedPaymentForMessaging] = useState(null);
   const [paymentMessages, setPaymentMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
   const [messagesLoading, setMessagesLoading] = useState(false);
+  const [newMessage, setNewMessage] = useState('');
+  const [qrCode, setQrCode] = useState(null);
+  const [loadingQR, setLoadingQR] = useState(false);
+  
   const navigate = useNavigate();
 
   // Check if admin is authenticated
@@ -394,10 +397,11 @@ const AdminDashboard = () => {
     const token = localStorage.getItem('adminToken');
     if (!token) {
       navigate('/admin/login');
-    } else {
-      // Load real data from backend
-      loadData();
+      return;
     }
+    
+    loadData();
+    loadAdminSettings();
   }, [navigate]);
 
   // Load real data from backend
@@ -775,6 +779,58 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Error hiding payment:', error);
       alert('Error hiding payment');
+    }
+  };
+
+  // Load admin settings including QR code
+  const loadAdminSettings = async () => {
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/settings`, {
+        headers: {
+          'Authorization': 'admin-secret-token'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.settings.qrCode) {
+          setQrCode(data.settings.qrCode);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading admin settings:', error);
+    }
+  };
+
+  // Save QR code to backend
+  const saveQRCode = async (qrCodeData) => {
+    try {
+      setLoadingQR(true);
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'admin-secret-token'
+        },
+        body: JSON.stringify({ qrCode: qrCodeData })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setQrCode(qrCodeData);
+          alert('QR Code uploaded and saved successfully!');
+        } else {
+          alert('Failed to save QR Code: ' + (data.error || 'Unknown error'));
+        }
+      } else {
+        alert('Failed to save QR Code');
+      }
+    } catch (error) {
+      console.error('Error saving QR code:', error);
+      alert('Network error. Failed to save QR Code.');
+    } finally {
+      setLoadingQR(false);
     }
   };
 
@@ -1163,10 +1219,7 @@ const AdminDashboard = () => {
                         if (file) {
                           const reader = new FileReader();
                           reader.onload = (event) => {
-                            // In a real app, you would save this to a database
-                            // For now, we'll save it to localStorage
-                            localStorage.setItem('adminQRCode', event.target.result);
-                            alert('QR Code uploaded and saved successfully!');
+                            saveQRCode(event.target.result);
                           };
                           reader.readAsDataURL(file);
                         }
@@ -1180,7 +1233,9 @@ const AdminDashboard = () => {
                         width: '100%',
                         marginBottom: '1rem'
                       }}
+                      disabled={loadingQR}
                     />
+                    {loadingQR && <p>Saving QR code...</p>}
                   </div>
                   <p>Current QR Code:</p>
                   <div style={{ 
@@ -1194,13 +1249,11 @@ const AdminDashboard = () => {
                     justifyContent: 'center',
                     background: '#0f172a'
                   }}>
-                    {(() => {
-                      const savedQR = localStorage.getItem('adminQRCode');
-                      if (savedQR) {
-                        return <img src={savedQR} alt="Current Payment QR Code" style={{ maxWidth: '100%', maxHeight: '100%' }} />;
-                      }
-                      return <span style={{ color: '#94a3b8' }}>No QR Code Set</span>;
-                    })()}
+                    {qrCode ? (
+                      <img src={qrCode} alt="Current Payment QR Code" style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                    ) : (
+                      <span style={{ color: '#94a3b8' }}>No QR Code Set</span>
+                    )}
                   </div>
                 </StatCard>
               </>
