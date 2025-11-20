@@ -134,7 +134,7 @@ const features = [
 
 const Features = () => {
   return (
-    <FeaturesSection>
+    <FeaturesSection id="features">
       <Container>
         <SectionTitle>The Features You Deserve</SectionTitle>
         <SectionSubtitle>

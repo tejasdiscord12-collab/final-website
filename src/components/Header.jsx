@@ -171,6 +171,19 @@ const PaymentsButton = styled(Link)`
 const Header = ({ isAuthenticated, user, onLogout }) => {
   const navigate = useNavigate();
 
+  const handleFeaturesClick = (e) => {
+    e.preventDefault();
+    // Navigate to home page
+    navigate('/');
+    // Scroll to features section after a short delay to ensure page loads
+    setTimeout(() => {
+      const featuresSection = document.getElementById('features');
+      if (featuresSection) {
+        featuresSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
   return (
     <Nav>
       <Container>
@@ -178,7 +191,7 @@ const Header = ({ isAuthenticated, user, onLogout }) => {
         
         <Menu>
           <MenuItem><MenuLink to="/">Home</MenuLink></MenuItem>
-          <MenuItem><MenuLink to="/#features">Features</MenuLink></MenuItem>
+          <MenuItem><MenuLink to="/#features" onClick={handleFeaturesClick}>Features</MenuLink></MenuItem>
           <MenuItem><MenuLink to="/pricing">Pricing</MenuLink></MenuItem>
           <MenuItem><MenuLink to="/support">Support</MenuLink></MenuItem>
           <MenuItem><MenuLink to="/about">About</MenuLink></MenuItem>
