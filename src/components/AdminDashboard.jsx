@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
+import { getApiBaseUrl } from '../utils/api';
 
 const DashboardContainer = styled.div`
   background: #0f172a;
@@ -405,7 +406,7 @@ const AdminDashboard = () => {
       setLoading(true);
       
       // Fetch users from backend
-      const usersResponse = await fetch('http://localhost:4000/api/admin/users', {
+      const usersResponse = await fetch(`${getApiBaseUrl()}/api/admin/users`, {
         headers: {
           'Authorization': 'admin-secret-token'
         }
@@ -423,7 +424,7 @@ const AdminDashboard = () => {
       }
       
       // Fetch payments from backend
-      const paymentsResponse = await fetch('http://localhost:4000/api/payment/history', {
+      const paymentsResponse = await fetch(`${getApiBaseUrl()}/api/payment/history`, {
         headers: {
           'Authorization': 'admin-secret-token'
         }
@@ -435,7 +436,7 @@ const AdminDashboard = () => {
       }
       
       // Fetch messages from backend
-      const messagesResponse = await fetch('http://localhost:4000/api/messages', {
+      const messagesResponse = await fetch(`${getApiBaseUrl()}/api/messages`, {
         headers: {
           'Authorization': 'admin-secret-token'
         }
@@ -486,7 +487,7 @@ const AdminDashboard = () => {
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       try {
-        const response = await fetch(`http://localhost:4000/api/admin/users/${userId}`, {
+        const response = await fetch(`${getApiBaseUrl()}/api/admin/users/${userId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': 'admin-secret-token'
@@ -549,7 +550,7 @@ const AdminDashboard = () => {
     e.preventDefault();
     
     try {
-      const response = await fetch(`http://localhost:4000/api/admin/users/${selectedUser.id}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/users/${selectedUser.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -589,7 +590,7 @@ const AdminDashboard = () => {
   // Add function to fetch payments
   const fetchPayments = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/payment/history', {
+      const response = await fetch(`${getApiBaseUrl()}/api/payment/history`, {
         headers: {
           'Authorization': 'admin-secret-token'
         }
@@ -607,7 +608,7 @@ const AdminDashboard = () => {
   // Add function to update payment status
   const updatePaymentStatus = async (paymentId, status) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/payment/status/${paymentId}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/payment/status/${paymentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -635,7 +636,7 @@ const AdminDashboard = () => {
   // Add function to fetch messages
   const fetchMessages = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/messages', {
+      const response = await fetch(`${getApiBaseUrl()}/api/messages`, {
         headers: {
           'Authorization': 'admin-secret-token'
         }
@@ -654,7 +655,7 @@ const AdminDashboard = () => {
   const fetchPaymentMessages = async (paymentId) => {
     setMessagesLoading(true);
     try {
-      const response = await fetch(`http://localhost:4000/api/messages/payment/${paymentId}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/messages/payment/${paymentId}`, {
         headers: {
           'Authorization': 'admin-secret-token',
           'user-type': 'admin'
@@ -681,7 +682,7 @@ const AdminDashboard = () => {
     if (!newMessage.trim() || !selectedPaymentForMessaging) return;
     
     try {
-      const response = await fetch('http://localhost:4000/api/messages', {
+      const response = await fetch(`${getApiBaseUrl()}/api/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -723,7 +724,7 @@ const AdminDashboard = () => {
   // Add function to close chat
   const closeChat = async (paymentId) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/messages/chat/${paymentId}/close`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/messages/chat/${paymentId}/close`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -753,7 +754,7 @@ const AdminDashboard = () => {
   // Add function to hide payment from user
   const hidePaymentFromUser = async (paymentId) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/payment/${paymentId}/hide`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/payment/${paymentId}/hide`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

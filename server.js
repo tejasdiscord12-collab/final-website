@@ -6,9 +6,17 @@ import bcrypt from 'bcrypt';
 dotenv.config();
 
 const app = express();
+// Use Vercel's PORT or default to 4000
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+// Configure CORS to allow requests from your frontend
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-frontend-domain.vercel.app', 'https://your-domain.com'] 
+    : '*',
+  credentials: true
+}));
+
 // For normal JSON endpoints
 app.use(express.json());
 
@@ -399,6 +407,12 @@ app.put('/api/messages/:messageId/read', (req, res) => {
   res.json({ success: true, message: messages[messageIndex] });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server listening on ${PORT}`);
-});
+// Export the app for Vercel
+export default app;
+
+// Only start the server if this file is run directly (not imported)
+if (import.meta.url === new URL(import.meta.url).href) {
+  app.listen(PORT, () => {
+    console.log(`Server listening on ${PORT}`);
+  });
+}
