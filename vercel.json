@@ -3,17 +3,10 @@
   "builds": [
     {
       "src": "package.json",
-      "use": "@vercel/static-build"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "https://final-website-1-fsmv.onrender.com/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
     }
   ]
 }
