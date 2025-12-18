@@ -89,17 +89,17 @@ const Bio = styled.p`
 
 const teamMembers = [
   {
-    name: "Daniyal",
-    role: "Founder",
-    bio: "Visionary leader driving the strategic direction and innovation behind NexterCloud."
-  },
-  {
-    name: "Atulya",
+    name: "Atulya Ojha",
     role: "Founder",
     bio: "Technical architect ensuring our infrastructure is robust, scalable, and cutting-edge."
   },
   {
-    name: "Darpan",
+    name: "Daniyal Ojha",
+    role: "Founder",
+    bio: "Visionary leader driving the strategic direction and innovation behind NexterCloud."
+  },
+  {
+    name: "Darpan Ojha",
     role: "Founder",
     bio: "Reviewing operations and customer experience to deliver the best service possible."
   }
