@@ -94,7 +94,7 @@ const teamMembers = [
     bio: "Technical architect ensuring our infrastructure is robust, scalable, and cutting-edge."
   },
   {
-    name: "Daniyal Ojha",
+    name: "Daniyal",
     role: "Founder",
     bio: "Visionary leader driving the strategic direction and innovation behind NexterCloud."
   },
