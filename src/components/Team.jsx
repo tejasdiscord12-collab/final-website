@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import atulyaImg from '../assets/atulya.jpg';
 
 const TeamSection = styled.section`
   padding: 5rem 5%;
@@ -64,6 +65,13 @@ const Avatar = styled.div`
   font-weight: bold;
   color: #10b981;
   border: 2px solid rgba(16, 185, 129, 0.3);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const Name = styled.h3`
@@ -91,7 +99,8 @@ const teamMembers = [
   {
     name: "Atulya Ojha",
     role: "Founder",
-    bio: "Technical architect ensuring our infrastructure is robust, scalable, and cutting-edge."
+    bio: "Technical architect ensuring our infrastructure is robust, scalable, and cutting-edge.",
+    image: atulyaImg
   },
   {
     name: "Daniyal",
@@ -117,7 +126,11 @@ const Team = () => {
           {teamMembers.map((member, index) => (
             <TeamCard key={index}>
               <Avatar>
-                {member.name.charAt(0)}
+                {member.image ? (
+                  <img src={member.image} alt={member.name} />
+                ) : (
+                  member.name.charAt(0)
+                )}
               </Avatar>
               <Name>{member.name}</Name>
               <Role>{member.role}</Role>
