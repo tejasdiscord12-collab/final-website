@@ -5,6 +5,7 @@ import Hero from './components/Hero';
 import Features from './components/Features';
 import Pricing from './components/Pricing';
 import Testimonials from './components/Testimonials';
+import Team from './components/Team';
 import Network from './components/Network';
 import Console from './components/Console';
 import Footer from './components/Footer';
@@ -28,7 +29,7 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('userToken');
     const userData = localStorage.getItem('userData');
-    
+
     if (token && userData) {
       setIsAuthenticated(true);
       setUser(JSON.parse(userData));
@@ -58,6 +59,7 @@ function App() {
             <Network />
             <Console />
             <Testimonials />
+            <Team />
             <Footer />
           </>
         } />
