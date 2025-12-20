@@ -1,6 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import atulyaImg from '../assets/atulya.jpg';
+import daniyalImg from '../assets/daniyal.png';
+import darpanImg from '../assets/darpan.png';
 
 const TeamSection = styled.section`
   padding: 5rem 5%;
@@ -105,12 +107,14 @@ const teamMembers = [
   {
     name: "Daniyal",
     role: "Founder",
-    bio: "Visionary leader driving the strategic direction and innovation behind NexterCloud."
+    bio: "Visionary leader driving the strategic direction and innovation behind NexterCloud.",
+    image: daniyalImg
   },
   {
     name: "Darpan Ojha",
     role: "Founder",
-    bio: "Reviewing operations and customer experience to deliver the best service possible."
+    bio: "Reviewing operations and customer experience to deliver the best service possible.",
+    image: darpanImg
   }
 ];
 
